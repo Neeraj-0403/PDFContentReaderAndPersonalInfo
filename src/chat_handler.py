@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 def setup_chat(vectorstore, api_key: str):
     """Set up the chat system with memory and retriever."""
     # Get existing messages from session state
-    messages= st.session_state.messages[-10] if "messages" in st.session_state else []
+    messages= st.session_state.messages[10:] if "messages" in st.session_state else []
 
     # Initialize language model
     llm = ChatOpenAI(
