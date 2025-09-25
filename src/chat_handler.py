@@ -3,15 +3,14 @@ from langchain.chains.conversational_retrieval.base import ConversationalRetriev
 from langchain.chains import ConversationChain
 from langchain.memory import ConversationBufferMemory
 from .prompts import CHAT_PROMPT
-import streamlit as st
 import logging
 
 logger = logging.getLogger(__name__)
 
-def setup_chat(vectorstore, api_key: str):
+def setup_chat(vectorstore, api_key: str, messages=None):
     """Set up the chat system with memory and retriever."""
-    # Get existing messages from session state
-    messages= st.session_state.messages[10:] if "messages" in st.session_state else []
+    # Use provided messages or empty list
+    messages = messages[-10:] if messages else []
 
     # Initialize language model
     llm = ChatOpenAI(
@@ -80,18 +79,16 @@ def format_chat_history(messages: list) -> str:
             chat_history.append(f"Assistant: {msg['content']}")
     return "\n".join(chat_history)
 
-def process_message(chain, user_input: str):
+def process_message(chain, user_input: str, messages=None):
     """Process a user message and return the AI response."""
     try:
         logger.debug(f'Processing message: {user_input}')
         
-        # Initialize messages if not exists
-        if "messages" not in st.session_state:
-            logger.debug('Initializing messages in session state')
-            st.session_state.messages = []
+        # Use provided messages or empty list
+        messages = messages or []
         
         # Format chat history for context
-        chat_history = format_chat_history(st.session_state.messages)
+        chat_history = format_chat_history(messages)
         logger.debug(f'Chat history: {chat_history}')
 
         # Check if this is a PDF chain (ConversationalRetrievalChain) or personal chat (ConversationChain)
@@ -113,5 +110,5 @@ def process_message(chain, user_input: str):
             return response["response"]
 
     except Exception as e:
-        st.error(f"An error occurred: {str(e)}")
+        logger.error(f"An error occurred: {str(e)}")
         return "I apologize, but I encountered an error. Please try again."
