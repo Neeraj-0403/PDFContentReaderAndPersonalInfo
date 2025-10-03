@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 """
-Simple script to run the Flask PDF Reader application
+Simple script to run the FastAPI PDF Reader application
 """
 
 import os
 import sys
-from app import app
+import uvicorn
 
 if __name__ == '__main__':
     # Check if .env file exists
@@ -15,8 +15,8 @@ if __name__ == '__main__':
         print("Example: OPENAI_API_KEY=your_api_key_here")
         sys.exit(1)
     
-    print("🚀 Starting PDF Reader Application...")
-    print("📱 Open your browser and go to: http://localhost:5000")
+    print("🚀 Starting FastAPI PDF Reader Application...")
+    print("📱 Open your browser and go to: http://localhost:8000")
     print("🛑 Press Ctrl+C to stop the server")
     
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)

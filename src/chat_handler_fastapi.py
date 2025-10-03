@@ -9,7 +9,6 @@ logger = logging.getLogger(__name__)
 
 def setup_chat(vectorstore, api_key: str, messages=None):
     """Set up the chat system with memory and retriever."""
-    # Use provided messages or empty list
     messages = messages[-10:] if messages else []
 
     # Initialize language model
@@ -33,12 +32,13 @@ def setup_chat(vectorstore, api_key: str, messages=None):
                 memory.chat_memory.add_user_message(msg["content"])
             else:
                 memory.chat_memory.add_ai_message(msg["content"])
+        
         # Configure retriever for PDF chat
         retriever = vectorstore.as_retriever(
-            search_kwargs={"k": 3}  # Retrieve top 3 most relevant chunks
+            search_kwargs={"k": 3}
         )
         
-        # Create the QA chain with combined document context and chat history
+        # Create the QA chain
         qa_chain = ConversationalRetrievalChain.from_llm(
             llm=llm,
             retriever=retriever,
@@ -51,8 +51,6 @@ def setup_chat(vectorstore, api_key: str, messages=None):
         )
     else:
         # Create a simple conversation chain for personal chat
-        
-        # Initialize memory for personal chat with correct keys
         memory = ConversationBufferMemory()
         
         # Add message history
@@ -72,7 +70,7 @@ def setup_chat(vectorstore, api_key: str, messages=None):
 def format_chat_history(messages: list) -> str:
     """Format the chat history for the AI context."""
     chat_history = []
-    for msg in messages[-10:]:  # Last 10 messages for context
+    for msg in messages[-10:]:
         if msg["role"] == "user":
             chat_history.append(f"Human: {msg['content']}")
         else:
@@ -84,29 +82,26 @@ def process_message(chain, user_input: str, messages=None):
     try:
         logger.debug(f'Processing message: {user_input}')
         
-        # Use provided messages or empty list
         messages = messages or []
         
         # Format chat history for context
         chat_history = format_chat_history(messages)
         logger.debug(f'Chat history: {chat_history}')
 
-        # Check if this is a PDF chain (ConversationalRetrievalChain) or personal chat (ConversationChain)
+        # Check if this is a PDF chain or personal chat
         is_pdf_chain = hasattr(chain, 'retriever')
         
-        # Process the input through the chain with appropriate input keys
+        # Process the input through the chain
         if is_pdf_chain:
             response = chain.invoke({
                 "question": user_input,
                 "chat_history": chat_history
             })
-            # For PDF chain, answer is in the "answer" key
             return response["answer"]
         else:
             response = chain.invoke({
                 "input": user_input
             })
-            # For conversation chain, response is in the "response" key
             return response["response"]
 
     except Exception as e:

@@ -56,9 +56,9 @@ def index():
 def process_pdf_background(filepath, session_id, filename):
     """Process PDF in background thread."""
     try:
-        docs = load_pdf(filepath)
-        vectorstore = create_vectorstore(docs)
-        user_chains[session_id]['pdf_chain'] = setup_chat(vectorstore, api_key)
+        chunks = load_pdf(filepath)
+        search_data = create_simple_search(chunks)
+        user_chains[session_id]['pdf_chain'] = setup_chat(search_data, api_key)
         user_chains[session_id]['pdf_status'] = 'ready'
         logger.info(f"PDF {filename} processed successfully")
     except Exception as e:
@@ -78,7 +78,9 @@ def upload_file():
     if file and file.filename.lower().endswith('.pdf'):
         try:
             filename = secure_filename(file.filename)
-            filepath = os.path.join(app.config['UPLOAD_FOLDER'], f'{get_session_id()}.pdf')
+            # Use /tmp for serverless environments
+            upload_dir = '/tmp' if os.path.exists('/tmp') else app.config['UPLOAD_FOLDER']
+            filepath = os.path.join(upload_dir, f'{get_session_id()}.pdf')
             file.save(filepath)
             
             session_id = get_session_id()
